@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Typing Speed Mock Test</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 30px;
+      text-align: center;
+      background-color: #02312f;
+      font-size: 20px;
+      font-weight: 100;
+      color: white;
+    }
+    #quote {
+      font-size: 1.3em;
+      margin: 20px auto;
+      max-width: 800px;
+      color: #cf7373;
+    }
+    #highlightedQuote span.correct {
+      background-color: #d4edda;
+    }
+    #highlightedQuote span.incorrect {
+      background-color: #f8d7da;
+    }
+    #inputArea {
+      width: 90%;
+      padding: 10px;
+      font-size: 20px;
+      margin-top: 20px;
+    }
+    #result, #timer, #accuracy, #leaderboard {
+      margin-top: 20px;
+      font-weight: bold;
+      font-size: 1.1em;
+    }
+    button {
+      margin-top: 20px;
+      padding: 10px 20px;
+      font-size: 1em;
+    }
+    ul {
+      list-style: none;
+      padding: 0;
+    }
+    h1{
+        font-style: normal;
+        color: #81b2f1;
+    }
+    h12{
+        color: #cf7373;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>Mock Typing Speed Test</h1>
+  <h12>type the following in the input area below</h12>
+  <div id="quote"></div>
+  <div id="highlightedQuote"></div>
+
+  <textarea id="inputArea" placeholder="Start typing here..." rows="4"></textarea>
+  <p id="timer">Time: 0s</p>
+  <p id="accuracy"></p>
+  <p id="result"></p>
+  <button onclick="resetTest()">Try Another</button>
+
+  <h2>🏆 Leaderboard</h2>
+  <div id="leaderboard"></div>
+  <button onclick="clearLeaderboard()">Clear Leaderboard</button>
+  
+
+  <script>
+    const quotes = [
+  "Typing like this is like watching a hippo do ballet: unexpectedly slow and oddly fascinating.",
+  "You typed that sentence like a cat walking on a keyboard during an earthquake.",
+  "The only thing slower than your typing is a snail on a treadmill with a Netflix subscription.",
+  "Congratulations, you just broke the world record for slowest coherent sentence typed since 1895.",
+  "If typing were a race, you'd be overtaken by a toddler on a tricycle typing with crayons.",
+  "It's impressive how your typos managed to invent three new languages in one sentence.",
+  "Even my grandma's ghost can type faster than that—and she's terrible with tech.",
+  "Your words were so jumbled, even autocorrect packed its bags and quit the app.",
+  "NASA called. They want to study the black hole of productivity that is your typing.",
+  "That sentence was so slow, it's being aired in slow motion on National Geographic.",
+  "If your typing were a movie, it'd be a 10-hour documentary called 'The Struggle.'",
+  "You type like you're trying to decode Morse code using only your nose.",
+  "By the time you finish typing, AI will have taken over the world twice.",
+  "You're typing with such caution, it's like the keys might explode if you go too fast.",
+  "This speed test turned into a sleep test somewhere along the way.",
+  "Are you typing or sending carrier pigeons with every word?",
+  "If words could cry, yours would be sobbing in Comic Sans.",
+  "You type like autocorrect is your worst enemy and spellcheck is a conspiracy.",
+  "Even a microwave's popcorn button moves faster than your fingers.",
+  "Your typing rhythm sounds like an amateur playing drums blindfolded in a cave.",
+  "The only thing slower than your typing is a snail on a treadmill with a Netflix subscription.",
+  "That sentence was so slow, it's being aired in slow motion on National Geographic.",
+  "This typing session had more suspense than a thriller novel.",
+  "You type like you're decoding an ancient scroll in the dark using Morse code.",
+  "I've read Shakespeare tragedies faster than your last sentence.",
+  "That paragraph had more delays than a Monday morning train.",
+  "I grew a virtual beard waiting for that sentence to end.",
+];
+
+    let expectedText = "";
+    let startTime = null;
+    let intervalId = null;
+    let isDone = false;
+    const MAX_TIME = 60; // seconds
+
+    const quoteDisplay = document.getElementById("quote");
+    const highlightedQuote = document.getElementById("highlightedQuote");
+    const inputArea = document.getElementById("inputArea");
+    const result = document.getElementById("result");
+    const timerDisplay = document.getElementById("timer");
+    const accuracyDisplay = document.getElementById("accuracy");
+    const leaderboardDisplay = document.getElementById("leaderboard");
+
+    function getRandomQuote() {
+      const index = Math.floor(Math.random() * quotes.length);
+      return quotes[index];
+    }
+
+    function loadQuote() {
+      expectedText = getRandomQuote();
+      quoteDisplay.textContent = "";
+      highlightedQuote.innerHTML = expectedText
+        .split(" ")
+        .map(word => `<span>${word}</span>`)
+        .join(" ");
+      inputArea.value = "";
+      inputArea.disabled = false;
+      result.textContent = "";
+      accuracyDisplay.textContent = "";
+      timerDisplay.textContent = "Time: 0s";
+      startTime = null;
+      isDone = false;
+      clearInterval(intervalId);
+      displayLeaderboard();
+    }
+    function clearLeaderboard() {
+  if (confirm("Are you sure you want to clear the leaderboard?")) {
+    localStorage.removeItem("typingLeaderboard");
+    displayLeaderboard();
+  }
+}
+
+    function startTimer() {
+      startTime = new Date();
+      intervalId = setInterval(() => {
+        const now = new Date();
+        const secondsPassed = Math.floor((now - startTime) / 1000);
+        timerDisplay.textContent = `Time: ${secondsPassed}s`;
+        if (secondsPassed >= MAX_TIME && !isDone) {
+          clearInterval(intervalId);
+          isDone = true;
+          inputArea.disabled = true;
+          result.innerHTML = `⏰ Time's up! You failed to finish in ${MAX_TIME} seconds.<br> Mtoto mjinga kama babake 😂.`;
+          playSound("fail");
+        }
+      }, 1000);
+    }
+
+    function calculateWPM(text, timeSeconds) {
+      const wordCount = text.trim().split(/\s+/).length;
+      return Math.round((wordCount / timeSeconds) * 60);
+    }
+
+    function calculateAccuracy(userInput, expected) {
+      const inputWords = userInput.trim().split(/\s+/);
+      const expectedWords = expected.trim().split(/\s+/);
+      let correct = 0;
+      for (let i = 0; i < expectedWords.length; i++) {
+        if (inputWords[i] === expectedWords[i]) correct++;
+      }
+      return Math.round((correct / expectedWords.length) * 100);
+    }
+
+    inputArea.addEventListener("focus", () => {
+      if (!startTime) startTimer();
+    });
+
+    inputArea.addEventListener("input", () => {
+      if (isDone) return;
+      const userText = inputArea.value;
+      const inputWords = userText.trim().split(/\s+/);
+      const expectedWords = expectedText.trim().split(/\s+/);
+      const spans = highlightedQuote.querySelectorAll("span");
+
+      spans.forEach((span, i) => {
+        if (inputWords[i] === undefined) {
+          span.className = "";
+        } else if (inputWords[i] === expectedWords[i]) {
+          span.className = "correct";
+        } else {
+          span.className = "incorrect";
+        }
+      });
+
+      if (userText === expectedText) {
+        const endTime = new Date();
+        const timeTaken = (endTime - startTime) / 1000;
+        clearInterval(intervalId);
+        isDone = true;
+
+        const wpm = calculateWPM(expectedText, timeTaken);
+        const accuracy = calculateAccuracy(userText, expectedText);
+
+        accuracyDisplay.textContent = `Accuracy: ${accuracy}%`;
+
+        if (timeTaken < MAX_TIME) {
+          result.innerHTML = `👏 Finished in ${Math.floor(timeTaken)}s! WPM: ${wpm}.<br>Keyboard survived. Barely.`;
+          playSound("success");
+          saveToLeaderboard(timeTaken, wpm, accuracy);
+        } else {
+          result.innerHTML = `You typed the whole thing but took too long. WPM: ${wpm}.<br>Try not to take a nap in the middle next time.`;
+          playSound("fail");
+        }
+
+        inputArea.disabled = true;
+      }
+    });
+
+    function resetTest() {
+      loadQuote();
+      inputArea.focus();
+    }
+
+    function playSound(type) {
+      const audio = new Audio(type === "fail" ? "sound/feliyaaa failure failiyaaa kalenjin song(M4A_128K).m4a" : "sound/The emperor_ the conqueror_ the champion_ the LION is here_ _gamechanger _flavour _flavourofafrica(M4A_128K).m4a");
+      audio.play();
+    }
+
+    function saveToLeaderboard(time, wpm, accuracy) {
+      const name = prompt("Enter your name for the leaderboard:");
+      if (!name) return;
+      const entry = { name, time: Math.floor(time), wpm, accuracy };
+      let board = JSON.parse(localStorage.getItem("typingLeaderboard")) || [];
+      board.push(entry);
+      board.sort((a, b) => b.wpm - a.wpm);
+      localStorage.setItem("typingLeaderboard", JSON.stringify(board.slice(0, 5)));
+    }
+
+    function displayLeaderboard() {
+      let board = JSON.parse(localStorage.getItem("typingLeaderboard")) || [];
+      leaderboardDisplay.innerHTML = board.length ?
+        `<ul>${board.map(e => `<li>${e.name} - WPM: ${e.wpm}, Accuracy: ${e.accuracy}%, Time: ${e.time}s</li>`).join('')}</ul>` :
+        "<p>No entries yet.</p>";
+    }
+
+    window.onload = loadQuote;
+  </script>
+
+</body>
+</html>
